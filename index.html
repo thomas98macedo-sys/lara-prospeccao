@@ -204,7 +204,32 @@ td a{font-size:.85rem}
   .search-grid{grid-template-columns:1fr}
   .kpi-grid{grid-template-columns:1fr 1fr}
   .hero h1{font-size:1.3rem}
+  .plans-grid{grid-template-columns:1fr}
 }
+
+/* ═══════════════════════════════════════════
+   PAYWALL OVERLAY
+   ═══════════════════════════════════════════ */
+#paywallOverlay{position:fixed;inset:0;z-index:150;background:rgba(10,11,15,.92);backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.paywall-card{background:var(--s1);border:1px solid var(--bd);border-radius:24px;padding:40px;max-width:640px;width:100%;position:relative;overflow:hidden;animation:fadeIn .3s}
+.paywall-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gr),var(--bl),transparent)}
+.paywall-title{text-align:center;font-size:1.5rem;margin-bottom:8px}
+.paywall-sub{text-align:center;color:var(--mt);font-size:.9rem;margin-bottom:28px}
+.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.plan-card{background:var(--s2);border:1px solid var(--bd);border-radius:16px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.plan-card:hover,.plan-card.selected{border-color:var(--gr);box-shadow:0 0 0 2px rgba(0,229,160,.2)}
+.plan-card.popular::after{content:'Mais popular';position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--gr);color:#000;font-size:.7rem;font-weight:600;padding:2px 12px;border-radius:0 0 8px 8px}
+.plan-price{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--gr);margin:12px 0 4px}
+.plan-price small{font-size:.9rem;font-weight:400;color:var(--mt)}
+.plan-name{font-weight:500;margin-bottom:4px}
+.plan-desc{color:var(--mt);font-size:.82rem}
+.paywall-btn{width:100%;padding:14px;margin-bottom:12px}
+.paywall-close{display:block;text-align:center;color:var(--mt);font-size:.85rem;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif}
+.paywall-close:hover{color:var(--tx)}
+
+/* Trial Banner */
+.trial-banner{display:none;align-items:center;gap:8px;padding:4px 14px;border-radius:8px;font-size:.8rem;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);color:var(--gr)}
+.trial-banner.expired{background:rgba(255,107,53,.1);border-color:rgba(255,107,53,.25);color:var(--wn)}
 </style>
 </head>
 <body>
@@ -268,6 +293,7 @@ td a{font-size:.85rem}
       <span class="tag-badge">Prospecção B2B</span>
     </div>
     <div class="header-right">
+      <span class="trial-banner" id="trialBanner"></span>
       <span class="user-name" id="userName"></span>
       <button class="btn-admin" id="btnAdmin" onclick="openAdmin()">⚙️ Admin</button>
       <button class="btn btn-sm btn-danger" onclick="window.doLogout()">Sair</button>
@@ -360,6 +386,30 @@ td a{font-size:.85rem}
 </div>
 
 <!-- ═══════════════════════════════════════════
+     PAYWALL OVERLAY
+     ═══════════════════════════════════════════ -->
+<div id="paywallOverlay">
+  <div class="paywall-card">
+    <h2 class="paywall-title">Assine a LARA</h2>
+    <p class="paywall-sub" id="paywallSub">Seu período de teste acabou. Escolha um plano para continuar prospectando leads ilimitados.</p>
+    <div class="plans-grid">
+      <div class="plan-card selected" onclick="selectPlan('monthly')" id="planMonthly">
+        <div class="plan-name">Mensal</div>
+        <div class="plan-price">R$97<small>/mês</small></div>
+        <div class="plan-desc">Buscas ilimitadas</div>
+      </div>
+      <div class="plan-card popular" onclick="selectPlan('quarterly')" id="planQuarterly">
+        <div class="plan-name">Trimestral</div>
+        <div class="plan-price">R$197<small>/3 meses</small></div>
+        <div class="plan-desc">Economia de 32%</div>
+      </div>
+    </div>
+    <button class="btn btn-primary paywall-btn" onclick="goCheckout()" id="btnCheckout">Assinar agora</button>
+    <button class="paywall-close" onclick="closePaywall()">Voltar</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      ADMIN OVERLAY
      ═══════════════════════════════════════════ -->
 <div id="adminOverlay">
@@ -423,7 +473,7 @@ td a{font-size:.85rem}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,getDocs,query,orderBy,limit,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,getDocs,query,orderBy,limit,serverTimestamp,doc,getDoc,setDoc,updateDoc,Timestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig={
   apiKey:"AIzaSyCzdhnOZw0P95391IzXUZ7L-X_u-V3xofQ",
@@ -450,6 +500,11 @@ window._orderBy=orderBy;
 window._limit=limit;
 window._serverTimestamp=serverTimestamp;
 window._ADMIN_EMAIL=ADMIN_EMAIL;
+window._doc=doc;
+window._getDoc=getDoc;
+window._setDoc=setDoc;
+window._updateDoc=updateDoc;
+window._Timestamp=Timestamp;
 
 const errMap={
   "auth/user-not-found":"Usuário não encontrado.",
@@ -468,8 +523,111 @@ function showErr(e){
   setTimeout(()=>el.textContent="",5000);
 }
 
+// ── Access Control ──
+async function checkAccess(user){
+  if(user.email===ADMIN_EMAIL){
+    window._accessLevel="admin";
+    window._trialDaysLeft=0;
+    window._dailySearchesLeft=Infinity;
+    updateTrialBanner();
+    return;
+  }
+
+  const userRef=doc(db,"users",user.uid);
+  let userSnap=await getDoc(userRef);
+
+  if(!userSnap.exists()){
+    await setDoc(userRef,{
+      email:user.email,
+      name:user.displayName||user.email.split("@")[0],
+      trialStart:Timestamp.now(),
+      subscriptionStatus:"trial",
+      createdAt:serverTimestamp()
+    });
+    userSnap=await getDoc(userRef);
+  }
+
+  const userData=userSnap.data();
+
+  if(userData.subscriptionStatus==="active"){
+    window._accessLevel="subscriber";
+    updateTrialBanner();
+    return;
+  }
+
+  const trialStart=userData.trialStart?.toDate?userData.trialStart.toDate():new Date();
+  const now=new Date();
+  const daysSinceStart=(now-trialStart)/(1000*60*60*24);
+
+  if(daysSinceStart<=7){
+    window._accessLevel="trial";
+    window._trialDaysLeft=Math.ceil(7-daysSinceStart);
+    const today=now.toISOString().slice(0,10);
+    const dailyRef=doc(db,"dailySearches",user.uid+"_"+today);
+    const dailySnap=await getDoc(dailyRef);
+    const dailyCount=dailySnap.exists()?dailySnap.data().count:0;
+    window._dailySearchCount=dailyCount;
+    window._dailySearchesLeft=Math.max(0,2-dailyCount);
+    updateTrialBanner();
+    return;
+  }
+
+  window._accessLevel="expired";
+  window._trialDaysLeft=0;
+  window._dailySearchesLeft=0;
+  updateTrialBanner();
+  showPaywall();
+}
+
+function updateTrialBanner(){
+  const banner=document.getElementById("trialBanner");
+  if(!banner)return;
+  if(window._accessLevel==="admin"){
+    banner.style.display="inline-flex";
+    banner.className="trial-banner";
+    banner.textContent="Admin";
+  }else if(window._accessLevel==="subscriber"){
+    banner.style.display="inline-flex";
+    banner.className="trial-banner";
+    banner.textContent="Assinante";
+  }else if(window._accessLevel==="trial"){
+    banner.style.display="inline-flex";
+    banner.className="trial-banner";
+    banner.textContent="Trial: "+window._trialDaysLeft+"d restantes · "+window._dailySearchesLeft+"/2 buscas hoje";
+  }else if(window._accessLevel==="expired"){
+    banner.style.display="inline-flex";
+    banner.className="trial-banner expired";
+    banner.textContent="Trial expirado";
+  }else{
+    banner.style.display="none";
+  }
+}
+
+function showPaywall(){
+  document.getElementById("paywallOverlay").style.display="flex";
+}
+
+async function handleCheckoutSuccess(user){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get("checkout")==="success"&&params.get("session_id")){
+    try{
+      const resp=await fetch("/api/verify-session?session_id="+params.get("session_id"));
+      const data=await resp.json();
+      if(data.status==="active"){
+        const userRef=doc(db,"users",user.uid);
+        await updateDoc(userRef,{
+          subscriptionStatus:"active",
+          stripeCustomerId:data.customer_id||"",
+          stripeSubscriptionId:data.subscription_id||""
+        });
+      }
+    }catch(e){console.error("Verify session error:",e)}
+    window.history.replaceState({},"",window.location.pathname);
+  }
+}
+
 // Auth State Observer
-onAuthStateChanged(auth,(user)=>{
+onAuthStateChanged(auth,async(user)=>{
   if(user){
     document.getElementById("authOverlay").style.display="none";
     document.getElementById("appContent").style.display="block";
@@ -477,10 +635,14 @@ onAuthStateChanged(auth,(user)=>{
     document.getElementById("userName").textContent=name;
     document.getElementById("btnAdmin").style.display=user.email===ADMIN_EMAIL?"inline-flex":"none";
     window._currentUser=user;
+    await handleCheckoutSuccess(user);
+    await checkAccess(user);
   }else{
     document.getElementById("authOverlay").style.display="flex";
     document.getElementById("appContent").style.display="none";
+    document.getElementById("paywallOverlay").style.display="none";
     window._currentUser=null;
+    window._accessLevel=null;
   }
 });
 
@@ -535,10 +697,76 @@ var currentPage=1;
 const PER=20;
 
 // ── Search ──
+// ── Paywall Controls ──
+var selectedPlan="monthly";
+
+function selectPlan(plan){
+  selectedPlan=plan;
+  document.getElementById("planMonthly").classList.toggle("selected",plan==="monthly");
+  document.getElementById("planQuarterly").classList.toggle("selected",plan==="quarterly");
+}
+
+function openPaywall(){document.getElementById("paywallOverlay").style.display="flex"}
+function closePaywall(){document.getElementById("paywallOverlay").style.display="none"}
+
+async function goCheckout(){
+  const user=window._currentUser;
+  if(!user)return;
+  const priceId=selectedPlan==="quarterly"
+    ?"price_1TCCFjRsd1817j5Hz8QOBOeL"
+    :"price_1TCCFVRsd1817j5Hu5uRDc8P";
+
+  document.getElementById("btnCheckout").disabled=true;
+  document.getElementById("btnCheckout").textContent="Redirecionando...";
+
+  try{
+    const resp=await fetch("/api/create-checkout-session",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({price_id:priceId,email:user.email,uid:user.uid})
+    });
+    const data=await resp.json();
+    if(data.url){window.location.href=data.url}
+    else{alert("Erro ao criar sessão: "+(data.error||"Tente novamente."))}
+  }catch(e){alert("Erro: "+e.message)}
+
+  document.getElementById("btnCheckout").disabled=false;
+  document.getElementById("btnCheckout").textContent="Assinar agora";
+}
+
+// ── Search ──
 async function startSearch(){
   const city=document.getElementById("inputCity").value.trim();
   const niche=document.getElementById("inputNiche").value.trim();
   if(!city||!niche)return alert("Preencha cidade e nicho.");
+
+  // Access gating
+  const level=window._accessLevel;
+  if(level==="expired"){
+    openPaywall();
+    return;
+  }
+  if(level==="trial"){
+    if(window._dailySearchesLeft<=0){
+      document.getElementById("paywallSub").textContent="Você atingiu o limite de 2 buscas/dia do trial. Assine para buscas ilimitadas.";
+      openPaywall();
+      return;
+    }
+    try{
+      const user=window._currentUser;
+      const today=new Date().toISOString().slice(0,10);
+      const dailyRef=window._doc(window._db,"dailySearches",user.uid+"_"+today);
+      const dailySnap=await window._getDoc(dailyRef);
+      const newCount=(dailySnap.exists()?dailySnap.data().count:0)+1;
+      await window._setDoc(dailyRef,{count:newCount,uid:user.uid,date:today});
+      window._dailySearchCount=newCount;
+      window._dailySearchesLeft=Math.max(0,2-newCount);
+      const banner=document.getElementById("trialBanner");
+      if(banner&&window._trialDaysLeft!==undefined){
+        banner.textContent="Trial: "+window._trialDaysLeft+"d restantes · "+window._dailySearchesLeft+"/2 buscas hoje";
+      }
+    }catch(e){console.error("Daily search tracking error:",e)}
+  }
 
   leads=[];
   currentPage=1;
