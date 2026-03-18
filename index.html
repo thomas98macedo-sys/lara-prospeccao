@@ -187,6 +187,19 @@ td a{font-size:.85rem}
 .admin-table-wrap{border-radius:16px;border:1px solid var(--bd);overflow-x:auto;background:var(--s1)}
 .admin-table-wrap table{min-width:700px}
 
+/* Free Accounts */
+.free-accounts-card{padding:24px;margin-bottom:28px}
+.free-accounts-card h4{font-size:1rem;margin-bottom:16px}
+.free-add-row{display:flex;gap:8px;margin-bottom:16px}
+.free-add-row input{flex:1;padding:10px 14px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.9rem}
+.free-add-row input::placeholder{color:var(--mt)}
+.free-add-row button{white-space:nowrap}
+.free-list{display:flex;flex-direction:column;gap:6px}
+.free-item{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-radius:10px;background:var(--s2);font-size:.88rem}
+.free-item .email{color:var(--tx)}
+.free-item .remove-btn{background:none;border:none;color:var(--wn);cursor:pointer;font-size:1rem;padding:0 4px;opacity:.7;transition:opacity .2s}
+.free-item .remove-btn:hover{opacity:1}
+
 /* ═══════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════ */
@@ -464,6 +477,19 @@ td a{font-size:.85rem}
         <tbody id="adminTableBody"></tbody>
       </table>
     </div>
+
+    <!-- Free Accounts -->
+    <h4 style="margin-top:28px;margin-bottom:12px;font-size:1rem">🎟️ Contas Gratuitas</h4>
+    <div class="card free-accounts-card">
+      <p style="color:var(--mt);font-size:.84rem;margin-bottom:14px">Adicione emails de influenciadores ou membros do time para acesso gratuito ilimitado.</p>
+      <div class="free-add-row">
+        <input type="email" id="freeEmailInput" placeholder="email@exemplo.com">
+        <button class="btn btn-primary" onclick="addFreeAccount()">+ Adicionar</button>
+      </div>
+      <div class="free-list" id="freeAccountsList">
+        <div style="color:var(--mt);font-size:.85rem">Carregando...</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -473,7 +499,7 @@ td a{font-size:.85rem}
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import{getFirestore,collection,addDoc,getDocs,query,orderBy,limit,serverTimestamp,doc,getDoc,setDoc,updateDoc,Timestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,collection,addDoc,getDocs,query,orderBy,limit,serverTimestamp,doc,getDoc,setDoc,updateDoc,deleteDoc,Timestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig={
   apiKey:"AIzaSyCzdhnOZw0P95391IzXUZ7L-X_u-V3xofQ",
@@ -505,6 +531,7 @@ window._getDoc=getDoc;
 window._setDoc=setDoc;
 window._updateDoc=updateDoc;
 window._Timestamp=Timestamp;
+window._deleteDoc=deleteDoc;
 
 const errMap={
   "auth/user-not-found":"Usuário não encontrado.",
@@ -532,6 +559,19 @@ async function checkAccess(user){
     updateTrialBanner();
     return;
   }
+
+  // Check free accounts (influencers/team)
+  try{
+    const emailKey=user.email.replace(/\./g,"_");
+    const freeSnap=await getDoc(doc(db,"freeAccounts",emailKey));
+    if(freeSnap.exists()){
+      window._accessLevel="subscriber";
+      window._trialDaysLeft=0;
+      window._dailySearchesLeft=Infinity;
+      updateTrialBanner();
+      return;
+    }
+  }catch(e){console.log("freeAccounts check:",e)}
 
   const userRef=doc(db,"users",user.uid);
   let userSnap=await getDoc(userRef);
@@ -1005,6 +1045,7 @@ function openAdmin(){
   document.getElementById("adminOverlay").style.display="block";
   document.getElementById("adminEmail").textContent=window._ADMIN_EMAIL;
   loadAdmin();
+  loadFreeAccounts();
 }
 function closeAdmin(){document.getElementById("adminOverlay").style.display="none"}
 
@@ -1059,6 +1100,64 @@ function topList(obj,n){
     .slice(0,n)
     .map(([k,v])=>`<div class="top-item"><span class="name">${esc(k)}</span><span class="cnt">${v}</span></div>`)
     .join("")||'<div style="color:var(--mt);font-size:.85rem">Sem dados</div>';
+}
+
+// ── Free Accounts ──
+async function loadFreeAccounts(){
+  const list=document.getElementById("freeAccountsList");
+  if(!list)return;
+  try{
+    const q=window._query(window._collection(window._db,"freeAccounts"));
+    const snap=await window._getDocs(q);
+    if(snap.empty){
+      list.innerHTML='<div style="color:var(--mt);font-size:.85rem">Nenhuma conta gratuita adicionada.</div>';
+      return;
+    }
+    let html="";
+    snap.forEach(d=>{
+      const data=d.data();
+      const key=d.id;
+      html+=`<div class="free-item">
+        <span class="email">${esc(data.email)}</span>
+        <button class="remove-btn" onclick="removeFreeAccount('${key}','${esc(data.email)}')" title="Remover">✕</button>
+      </div>`;
+    });
+    list.innerHTML=html;
+  }catch(e){
+    console.error("loadFreeAccounts error:",e);
+    list.innerHTML='<div style="color:var(--wn);font-size:.85rem">Erro ao carregar contas.</div>';
+  }
+}
+
+async function addFreeAccount(){
+  const input=document.getElementById("freeEmailInput");
+  const email=input.value.trim().toLowerCase();
+  if(!email||!email.includes("@")){return alert("Digite um email válido.")}
+
+  const emailKey=email.replace(/\./g,"_");
+  try{
+    await window._setDoc(window._doc(window._db,"freeAccounts",emailKey),{
+      email:email,
+      addedBy:window._ADMIN_EMAIL,
+      addedAt:window._serverTimestamp()
+    });
+    input.value="";
+    loadFreeAccounts();
+  }catch(e){
+    console.error("addFreeAccount error:",e);
+    alert("Erro ao adicionar: "+e.message);
+  }
+}
+
+async function removeFreeAccount(key,email){
+  if(!confirm("Remover acesso gratuito de "+email+"?"))return;
+  try{
+    await window._deleteDoc(window._doc(window._db,"freeAccounts",key));
+    loadFreeAccounts();
+  }catch(e){
+    console.error("removeFreeAccount error:",e);
+    alert("Erro ao remover: "+e.message);
+  }
 }
 </script>
 
