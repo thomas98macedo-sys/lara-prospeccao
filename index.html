@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LARA — Prospecção B2B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0b0f;--s1:#11131a;--s2:#191c27;--bd:#252836;
+--gr:#00e5a0;--bl:#0066ff;--wn:#ff6b35;
+--tx:#eef0f8;--mt:#6b7280;--m2:#9ca3af;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-weight:400;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;font-weight:800}
+a{color:var(--gr);text-decoration:none}
+a:hover{text-decoration:underline}
+input{font-family:'DM Sans',sans-serif}
+
+/* ── Animations ── */
+@keyframes glow{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ri{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--gr),#00b87a);color:#000}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,229,160,.35)}
+.btn-secondary{background:var(--s2);color:var(--tx);border:1px solid var(--bd)}
+.btn-secondary:hover{border-color:var(--gr);transform:translateY(-1px)}
+.btn-danger{background:rgba(255,107,53,.15);color:var(--wn);border:1px solid rgba(255,107,53,.3)}
+.btn-danger:hover{background:rgba(255,107,53,.25);transform:translateY(-1px)}
+.btn-sm{padding:8px 16px;font-size:.85rem;border-radius:8px}
+
+/* ── Inputs ── */
+.input{width:100%;padding:14px 16px;background:var(--s2);border:1px solid var(--bd);border-radius:12px;color:var(--tx);font-size:.95rem;outline:none;transition:all .2s}
+.input:focus{border-color:var(--gr);box-shadow:0 0 0 3px rgba(0,229,160,.15)}
+.input::placeholder{color:var(--mt)}
+label{display:block;margin-bottom:6px;font-size:.85rem;color:var(--m2);font-weight:500}
+
+/* ── Logo ── */
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--gr),var(--bl));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:#000}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--tx);letter-spacing:1px}
+.logo-text span{color:var(--gr)}
+
+/* ── Card Base ── */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:20px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gr),var(--bl),transparent)}
+
+/* ── Dot Pulsante ── */
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gr);display:inline-block;animation:glow 2s ease-in-out infinite}
+
+/* ── Tags ── */
+.tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:500}
+.tag-api{background:rgba(0,229,160,.1);color:var(--gr);border:1px solid rgba(0,229,160,.2)}
+.tag-badge{background:rgba(0,102,255,.12);color:var(--bl);border:1px solid rgba(0,102,255,.25);padding:4px 10px;border-radius:8px;font-size:.7rem;font-weight:500}
+
+/* ── Status Badges ── */
+.st{padding:3px 10px;border-radius:8px;font-size:.75rem;font-weight:500}
+.open{background:rgba(0,229,160,.12);color:var(--gr)}
+.closed{background:rgba(255,107,53,.12);color:var(--wn)}
+.unk{background:rgba(107,114,128,.15);color:var(--mt)}
+
+/* ═══════════════════════════════════════════
+   AUTH OVERLAY
+   ═══════════════════════════════════════════ */
+#authOverlay{position:fixed;inset:0;z-index:100;background:rgba(10,11,15,.85);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:var(--s1);border:1px solid var(--bd);border-radius:24px;padding:40px;max-width:420px;width:100%;position:relative;overflow:hidden;animation:fadeIn .3s}
+.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gr),var(--bl),transparent)}
+.auth-logo{display:flex;justify-content:center;margin-bottom:24px}
+.auth-title{text-align:center;font-size:1.5rem;margin-bottom:6px}
+.auth-sub{text-align:center;color:var(--mt);font-size:.9rem;margin-bottom:28px}
+.auth-tabs{display:flex;background:var(--s2);border-radius:12px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;padding:10px;text-align:center;border-radius:10px;border:none;background:transparent;color:var(--mt);font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s}
+.auth-tab.active{background:var(--bd);color:var(--tx)}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.auth-form.hidden{display:none}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--mt);font-size:.85rem}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--bd)}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;background:var(--s2);border:1px solid var(--bd);border-radius:12px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-google:hover{border-color:var(--gr);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,229,160,.1)}
+.btn-google svg{width:20px;height:20px}
+#auth-err{color:var(--wn);font-size:.85rem;text-align:center;min-height:20px;margin-top:8px}
+
+/* ═══════════════════════════════════════════
+   APP CONTENT
+   ═══════════════════════════════════════════ */
+#appContent{display:none;position:relative;z-index:1;min-height:100vh}
+
+/* Header */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--bd);background:rgba(17,19,26,.8);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-right{display:flex;align-items:center;gap:12px}
+.user-name{color:var(--m2);font-size:.9rem}
+.btn-admin{padding:6px 14px;border-radius:8px;border:1px solid rgba(0,229,160,.25);background:rgba(0,229,160,.08);color:var(--gr);font-size:.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:none}
+.btn-admin:hover{background:rgba(0,229,160,.15);transform:translateY(-1px)}
+
+/* Hero */
+.hero{text-align:center;padding:60px 32px 20px}
+.hero h1{font-size:2.4rem;line-height:1.2;margin-bottom:12px}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--gr),var(--bl));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:var(--mt);font-size:1.05rem;max-width:540px;margin:0 auto}
+
+/* Search Card */
+.search-section{max-width:880px;margin:32px auto;padding:0 24px}
+.search-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;padding:28px;align-items:end}
+.search-api{display:flex;align-items:center;gap:8px;padding:12px 28px;font-size:.82rem;color:var(--gr);border-top:1px solid var(--bd)}
+
+/* Status Box */
+#status-box{display:none;max-width:880px;margin:20px auto;padding:0 24px}
+.status-inner{display:flex;align-items:center;gap:14px;padding:20px 28px;background:var(--s1);border:1px solid var(--bd);border-radius:16px}
+.spinner{width:22px;height:22px;border:2.5px solid var(--bd);border-top-color:var(--gr);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+#status-text{color:var(--m2);font-size:.9rem;flex:1}
+.progress-bar{width:100%;height:4px;background:var(--s2);border-radius:4px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gr),var(--bl));border-radius:4px;transition:width .4s;width:0}
+
+/* Empty State */
+#empty-state{text-align:center;padding:60px 24px;max-width:880px;margin:0 auto}
+#empty-state .emoji{font-size:3rem;margin-bottom:12px}
+#empty-state h3{font-size:1.3rem;margin-bottom:8px}
+#empty-state p{color:var(--mt);font-size:.9rem}
+
+/* Results */
+#results-section{display:none;max-width:1200px;margin:24px auto;padding:0 24px}
+.results-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.results-title{display:flex;align-items:center;gap:12px}
+.results-title h3{font-size:1.1rem}
+.results-count{background:rgba(0,229,160,.1);color:var(--gr);padding:2px 10px;border-radius:8px;font-size:.8rem;font-weight:500}
+.results-actions{display:flex;align-items:center;gap:12px}
+
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--bd);background:var(--s1)}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead{background:var(--s2)}
+th{padding:14px 16px;text-align:left;font-size:.8rem;font-weight:500;color:var(--m2);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:12px 16px;border-top:1px solid var(--bd);font-size:.88rem;vertical-align:middle}
+tr{animation:ri .4s ease both}
+tbody tr:hover{background:rgba(0,229,160,.03)}
+.stars{color:#f59e0b;white-space:nowrap}
+.reviews{color:var(--mt);font-size:.8rem}
+td a{font-size:.85rem}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:20px;margin-top:16px}
+.pg-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;transition:all .2s}
+.pg-btn:hover:not(:disabled){border-color:var(--gr);background:rgba(0,229,160,.08)}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+.pg-btn.active{background:var(--gr);color:#000;border-color:var(--gr);font-weight:500}
+.pg-info{color:var(--mt);font-size:.85rem}
+
+/* Footer */
+.app-footer{text-align:center;padding:40px 24px;color:var(--mt);font-size:.82rem;border-top:1px solid var(--bd);margin-top:60px}
+
+/* ═══════════════════════════════════════════
+   ADMIN OVERLAY
+   ═══════════════════════════════════════════ */
+#adminOverlay{position:fixed;inset:0;z-index:200;background:rgba(10,11,15,.92);backdrop-filter:blur(20px);overflow-y:auto;display:none;padding:24px}
+.admin-wrap{max-width:1100px;margin:0 auto}
+.admin-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:20px 0;border-bottom:1px solid var(--bd);margin-bottom:28px;position:sticky;top:0;background:rgba(10,11,15,.95);backdrop-filter:blur(12px);z-index:10}
+.admin-header-left{display:flex;align-items:center;gap:12px}
+.admin-header-left h2{font-size:1.3rem}
+.admin-header-left .sub{color:var(--mt);font-size:.82rem}
+.admin-header-right{display:flex;gap:8px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{padding:24px;text-align:center}
+.kpi-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--gr);margin-bottom:4px}
+.kpi-label{color:var(--mt);font-size:.82rem}
+
+/* Top Lists */
+.top-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.top-card{padding:24px}
+.top-card h4{font-size:.95rem;margin-bottom:16px;color:var(--tx)}
+.top-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;margin-bottom:6px;background:var(--s2)}
+.top-item .name{font-size:.88rem}
+.top-item .cnt{color:var(--gr);font-size:.85rem;font-weight:500}
+
+/* Admin Table */
+.admin-table-wrap{border-radius:16px;border:1px solid var(--bd);overflow-x:auto;background:var(--s1)}
+.admin-table-wrap table{min-width:700px}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media(max-width:768px){
+  .app-header{padding:12px 16px;flex-wrap:wrap;gap:8px}
+  .hero h1{font-size:1.6rem}
+  .hero{padding:40px 16px 16px}
+  .search-grid{grid-template-columns:1fr;padding:20px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .top-grid{grid-template-columns:1fr}
+  .results-header{flex-direction:column;align-items:flex-start}
+  .auth-card{padding:28px 20px}
+}
+@media(max-width:580px){
+  .search-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .hero h1{font-size:1.3rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     AUTH OVERLAY
+     ═══════════════════════════════════════════ -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo">
+        <div class="logo-icon">L</div>
+        <div class="logo-text">L<span>A</span>R<span>A</span></div>
+      </div>
+    </div>
+    <h2 class="auth-title">Bem-vindo à LARA</h2>
+    <p class="auth-sub">Prospecção B2B inteligente com dados reais do Google Maps</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="window.switchTab('login')">Entrar</button>
+      <button class="auth-tab" onclick="window.switchTab('register')">Criar conta</button>
+    </div>
+
+    <!-- Login Form -->
+    <form class="auth-form" id="loginForm" onsubmit="event.preventDefault();window.doLogin()">
+      <div><label>E-mail</label><input class="input" type="email" id="loginEmail" placeholder="seu@email.com" required></div>
+      <div><label>Senha</label><input class="input" type="password" id="loginPass" placeholder="Sua senha" required></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:14px">Entrar</button>
+    </form>
+
+    <!-- Register Form -->
+    <form class="auth-form hidden" id="registerForm" onsubmit="event.preventDefault();window.doRegister()">
+      <div><label>Nome</label><input class="input" type="text" id="regName" placeholder="Seu nome" required></div>
+      <div><label>E-mail</label><input class="input" type="email" id="regEmail" placeholder="seu@email.com" required></div>
+      <div><label>Senha</label><input class="input" type="password" id="regPass" placeholder="Mínimo 6 caracteres" required></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:14px">Criar conta</button>
+    </form>
+
+    <div class="auth-divider">ou</div>
+
+    <button class="btn-google" onclick="window.doGoogle()">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Continuar com Google
+    </button>
+
+    <div id="auth-err"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     APP CONTENT
+     ═══════════════════════════════════════════ -->
+<div id="appContent">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-icon">L</div>
+        <div class="logo-text">L<span>A</span>R<span>A</span></div>
+      </div>
+      <span class="tag-badge">Prospecção B2B</span>
+    </div>
+    <div class="header-right">
+      <span class="user-name" id="userName"></span>
+      <button class="btn-admin" id="btnAdmin" onclick="openAdmin()">⚙️ Admin</button>
+      <button class="btn btn-sm btn-danger" onclick="window.doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Encontre <em>leads qualificados</em> em segundos</h1>
+    <p>Busque empresas reais no Google Maps por cidade e nicho. Dados verificados, telefones e avaliações prontos para exportar.</p>
+  </section>
+
+  <!-- Search -->
+  <section class="search-section">
+    <div class="card">
+      <div class="search-grid">
+        <div>
+          <label>Cidade</label>
+          <input class="input" id="inputCity" placeholder="Ex: São Paulo" onkeydown="if(event.key==='Enter')startSearch()">
+        </div>
+        <div>
+          <label>Nicho / Segmento</label>
+          <input class="input" id="inputNiche" placeholder="Ex: Clínicas odontológicas" onkeydown="if(event.key==='Enter')startSearch()">
+        </div>
+        <div style="align-self:end">
+          <button class="btn btn-primary" onclick="startSearch()" id="btnSearch" style="height:48px;white-space:nowrap">🔍 Buscar</button>
+        </div>
+      </div>
+      <div class="search-api">
+        <span class="dot"></span>
+        Google Places API conectada
+      </div>
+    </div>
+  </section>
+
+  <!-- Status -->
+  <div id="status-box">
+    <div class="status-inner">
+      <div class="spinner"></div>
+      <div style="flex:1">
+        <div id="status-text">Buscando...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div id="empty-state">
+    <div class="emoji">🔎</div>
+    <h3>Pronta para prospectar</h3>
+    <p>Digite uma cidade e um nicho para encontrar leads qualificados no Google Maps</p>
+  </div>
+
+  <!-- Results -->
+  <section id="results-section">
+    <div class="results-header">
+      <div class="results-title">
+        <h3>Empresas encontradas</h3>
+        <span class="results-count" id="resultsCount">0</span>
+        <span class="tag tag-api"><span class="dot"></span> Google Maps Real</span>
+      </div>
+      <div class="results-actions">
+        <button class="btn btn-sm btn-secondary" onclick="exportCSV()">📥 Exportar CSV / Excel</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Empresa</th>
+            <th>Avaliação</th>
+            <th>Status</th>
+            <th>Telefone</th>
+            <th>Endereço</th>
+            <th>Categoria</th>
+            <th>Maps</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    LARA — Prospecção Inteligente · Google Places API
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ADMIN OVERLAY
+     ═══════════════════════════════════════════ -->
+<div id="adminOverlay">
+  <div class="admin-wrap">
+    <div class="admin-header">
+      <div class="admin-header-left">
+        <span style="font-size:1.5rem">⚙️</span>
+        <div>
+          <h2>Painel Admin</h2>
+          <div class="sub" id="adminEmail"></div>
+        </div>
+      </div>
+      <div class="admin-header-right">
+        <button class="btn btn-sm btn-secondary" onclick="loadAdmin()">🔄 Atualizar</button>
+        <button class="btn btn-sm btn-danger" onclick="closeAdmin()">Fechar</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="card kpi-card"><div class="kpi-val" id="kpiSearches">—</div><div class="kpi-label">Buscas realizadas</div></div>
+      <div class="card kpi-card"><div class="kpi-val" id="kpiLeads">—</div><div class="kpi-label">Total de leads</div></div>
+      <div class="card kpi-card"><div class="kpi-val" id="kpiUsers">—</div><div class="kpi-label">Usuários únicos</div></div>
+      <div class="card kpi-card"><div class="kpi-val" id="kpiAvg">—</div><div class="kpi-label">Média leads/busca</div></div>
+    </div>
+
+    <!-- Top Lists -->
+    <div class="top-grid">
+      <div class="card top-card">
+        <h4>🏷️ Top Nichos</h4>
+        <div id="topNiches"></div>
+      </div>
+      <div class="card top-card">
+        <h4>📍 Top Cidades</h4>
+        <div id="topCities"></div>
+      </div>
+    </div>
+
+    <!-- History Table -->
+    <h4 style="margin-bottom:12px;font-size:1rem">📋 Histórico de buscas</h4>
+    <div class="admin-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Usuário</th>
+            <th>Cidade</th>
+            <th>Nicho</th>
+            <th>Leads</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FIREBASE (Module Script)
+     ═══════════════════════════════════════════ -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut,onAuthStateChanged,updateProfile}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getFirestore,collection,addDoc,getDocs,query,orderBy,limit,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyCzdhnOZw0P95391IzXUZ7L-X_u-V3xofQ",
+  authDomain:"lara-prospector.firebaseapp.com",
+  projectId:"lara-prospector",
+  storageBucket:"lara-prospector.firebasestorage.app",
+  messagingSenderId:"1081384368369",
+  appId:"1:1081384368369:web:5ba2d5f22909bc1e7bd150",
+  measurementId:"G-E335L723GJ"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const ADMIN_EMAIL="thomas98macedo@gmail.com";
+
+// Expose to global scope
+window._db=db;
+window._collection=collection;
+window._addDoc=addDoc;
+window._getDocs=getDocs;
+window._query=query;
+window._orderBy=orderBy;
+window._limit=limit;
+window._serverTimestamp=serverTimestamp;
+window._ADMIN_EMAIL=ADMIN_EMAIL;
+
+const errMap={
+  "auth/user-not-found":"Usuário não encontrado.",
+  "auth/wrong-password":"Senha incorreta.",
+  "auth/invalid-email":"E-mail inválido.",
+  "auth/too-many-requests":"Muitas tentativas. Aguarde um momento.",
+  "auth/invalid-credential":"Credenciais inválidas. Verifique e-mail e senha.",
+  "auth/email-already-in-use":"Este e-mail já está cadastrado.",
+  "auth/weak-password":"A senha deve ter no mínimo 6 caracteres."
+};
+
+function showErr(e){
+  const el=document.getElementById("auth-err");
+  const code=e?.code||"";
+  el.textContent=errMap[code]||e?.message||"Erro desconhecido.";
+  setTimeout(()=>el.textContent="",5000);
+}
+
+// Auth State Observer
+onAuthStateChanged(auth,(user)=>{
+  if(user){
+    document.getElementById("authOverlay").style.display="none";
+    document.getElementById("appContent").style.display="block";
+    const name=user.displayName||user.email.split("@")[0];
+    document.getElementById("userName").textContent=name;
+    document.getElementById("btnAdmin").style.display=user.email===ADMIN_EMAIL?"inline-flex":"none";
+    window._currentUser=user;
+  }else{
+    document.getElementById("authOverlay").style.display="flex";
+    document.getElementById("appContent").style.display="none";
+    window._currentUser=null;
+  }
+});
+
+// Auth Actions
+window.doLogin=async function(){
+  const email=document.getElementById("loginEmail").value.trim();
+  const pass=document.getElementById("loginPass").value;
+  if(!email||!pass)return showErr({message:"Preencha todos os campos."});
+  try{await signInWithEmailAndPassword(auth,email,pass)}catch(e){showErr(e)}
+};
+
+window.doRegister=async function(){
+  const name=document.getElementById("regName").value.trim();
+  const email=document.getElementById("regEmail").value.trim();
+  const pass=document.getElementById("regPass").value;
+  if(!name||!email||!pass)return showErr({message:"Preencha todos os campos."});
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,email,pass);
+    await updateProfile(cred.user,{displayName:name});
+  }catch(e){showErr(e)}
+};
+
+window.doGoogle=async function(){
+  try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){if(e.code!=="auth/popup-closed-by-user")showErr(e)}
+};
+
+window.doLogout=async function(){
+  try{await signOut(auth)}catch(e){console.error(e)}
+};
+
+window.switchTab=function(tab){
+  const tabs=document.querySelectorAll(".auth-tab");
+  const loginForm=document.getElementById("loginForm");
+  const regForm=document.getElementById("registerForm");
+  document.getElementById("auth-err").textContent="";
+  if(tab==="login"){
+    tabs[0].classList.add("active");tabs[1].classList.remove("active");
+    loginForm.classList.remove("hidden");regForm.classList.add("hidden");
+  }else{
+    tabs[1].classList.add("active");tabs[0].classList.remove("active");
+    regForm.classList.remove("hidden");loginForm.classList.add("hidden");
+  }
+};
+</script>
+
+<!-- ═══════════════════════════════════════════
+     APP LOGIC (Non-module Script)
+     ═══════════════════════════════════════════ -->
+<script>
+var leads=[];
+var currentPage=1;
+const PER=20;
+
+// ── Search ──
+async function startSearch(){
+  const city=document.getElementById("inputCity").value.trim();
+  const niche=document.getElementById("inputNiche").value.trim();
+  if(!city||!niche)return alert("Preencha cidade e nicho.");
+
+  leads=[];
+  currentPage=1;
+  const q=encodeURIComponent(niche+" em "+city+" Brasil");
+
+  showStatus("Buscando empresas no Google Maps...",10);
+  document.getElementById("empty-state").style.display="none";
+  document.getElementById("results-section").style.display="none";
+  document.getElementById("btnSearch").disabled=true;
+
+  try{
+    let allResults=[];
+    let pageToken=null;
+
+    for(let page=0;page<3;page++){
+      const url=pageToken
+        ?"/api/search?pagetoken="+encodeURIComponent(pageToken)
+        :"/api/search?query="+q;
+
+      showStatus(`Buscando página ${page+1} de resultados...`,15+page*20);
+
+      const resp=await fetch(url);
+      if(!resp.ok)throw new Error("Erro na API: "+resp.status);
+      const data=await resp.json();
+
+      if(data.results)allResults=allResults.concat(data.results);
+
+      if(data.next_page_token){
+        pageToken=data.next_page_token;
+        await delay(2200);
+      }else{
+        break;
+      }
+    }
+
+    if(allResults.length===0){
+      hideStatus();
+      document.getElementById("empty-state").style.display="block";
+      document.getElementById("empty-state").querySelector("h3").textContent="Nenhum resultado";
+      document.getElementById("empty-state").querySelector("p").textContent="Tente outra cidade ou nicho.";
+      document.getElementById("btnSearch").disabled=false;
+      return;
+    }
+
+    // Sort by rating desc, then reviews desc
+    allResults.sort((a,b)=>(b.rating||0)-(a.rating||0)||(b.user_ratings_total||0)-(a.user_ratings_total||0));
+
+    showStatus(`Buscando detalhes de ${allResults.length} empresas...`,60);
+
+    // Fetch details in batches of 5
+    const detailed=[];
+    for(let i=0;i<allResults.length;i+=5){
+      const batch=allResults.slice(i,i+5);
+      const promises=batch.map(r=>fetchDetails(r));
+      const results=await Promise.all(promises);
+      detailed.push(...results);
+
+      const pct=60+Math.round((i/allResults.length)*35);
+      showStatus(`Detalhes: ${Math.min(i+5,allResults.length)}/${allResults.length}`,pct);
+    }
+
+    leads=detailed;
+
+    // Save to Firestore
+    showStatus("Salvando busca...",97);
+    try{
+      const user=window._currentUser;
+      if(user&&window._db){
+        await window._addDoc(window._collection(window._db,"searches"),{
+          uid:user.uid,
+          email:user.email,
+          name:user.displayName||user.email.split("@")[0],
+          city:city,
+          niche:niche,
+          leads:leads.length,
+          ts:window._serverTimestamp()
+        });
+      }
+    }catch(e){console.error("Firestore save error:",e)}
+
+    hideStatus();
+    renderTable();
+    document.getElementById("results-section").style.display="block";
+    document.getElementById("resultsCount").textContent=leads.length;
+
+  }catch(err){
+    hideStatus();
+    alert("Erro na busca: "+err.message);
+    document.getElementById("empty-state").style.display="block";
+  }
+
+  document.getElementById("btnSearch").disabled=false;
+}
+
+async function fetchDetails(place){
+  const item={
+    name:place.name||"—",
+    rating:place.rating||0,
+    reviews:place.user_ratings_total||0,
+    open:place.opening_hours?place.opening_hours.open_now:null,
+    address:place.formatted_address||place.vicinity||"—",
+    types:(place.types||[]).filter(t=>!["point_of_interest","establishment"].includes(t)).slice(0,2).join(", ")||"—",
+    place_id:place.place_id,
+    phone:"—",
+    website:"—"
+  };
+
+  try{
+    const resp=await fetch("/api/details?place_id="+encodeURIComponent(place.place_id));
+    if(resp.ok){
+      const data=await resp.json();
+      if(data.result){
+        item.phone=data.result.formatted_phone_number||data.result.international_phone_number||"—";
+        item.website=data.result.website||"—";
+      }
+    }
+  }catch(e){/* ignore detail errors */}
+
+  return item;
+}
+
+// ── Render Table ──
+function renderTable(){
+  const tbody=document.getElementById("tableBody");
+  const start=(currentPage-1)*PER;
+  const end=Math.min(start+PER,leads.length);
+  const page=leads.slice(start,end);
+
+  tbody.innerHTML=page.map((l,i)=>{
+    const idx=start+i+1;
+    const stars=renderStars(l.rating);
+    const statusBadge=l.open===true?'<span class="st open">Aberto</span>':l.open===false?'<span class="st closed">Fechado</span>':'<span class="st unk">—</span>';
+    const phone=l.phone!=="—"?`<a href="tel:${l.phone}">${l.phone}</a>`:"—";
+    const mapsUrl=`https://www.google.com/maps/place/?q=place_id:${l.place_id}`;
+
+    return `<tr style="animation-delay:${i*0.04}s">
+      <td>${idx}</td>
+      <td><strong>${esc(l.name)}</strong></td>
+      <td><span class="stars">${stars}</span> <span class="reviews">(${l.reviews})</span></td>
+      <td>${statusBadge}</td>
+      <td>${phone}</td>
+      <td>${esc(l.address)}</td>
+      <td>${esc(l.types)}</td>
+      <td><a href="${mapsUrl}" target="_blank" rel="noopener">🔗 Ver</a></td>
+    </tr>`;
+  }).join("");
+
+  renderPagination();
+}
+
+function renderStars(rating){
+  if(!rating)return'<span style="color:var(--mt)">—</span>';
+  let s="";
+  const full=Math.floor(rating);
+  const half=rating-full>=0.5;
+  for(let i=0;i<full;i++)s+="★";
+  if(half)s+="★";
+  while(s.length<5)s+="☆";
+  return s+" "+rating.toFixed(1);
+}
+
+function renderPagination(){
+  const total=Math.ceil(leads.length/PER);
+  const div=document.getElementById("pagination");
+  if(total<=1){div.innerHTML="";return;}
+
+  let html=`<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?"disabled":""}>← Anterior</button>`;
+  html+=`<span class="pg-info">Página ${currentPage} de ${total}</span>`;
+  html+=`<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===total?"disabled":""}>Próxima →</button>`;
+  div.innerHTML=html;
+}
+
+function goPage(p){
+  const total=Math.ceil(leads.length/PER);
+  if(p<1||p>total)return;
+  currentPage=p;
+  renderTable();
+  document.getElementById("results-section").scrollIntoView({behavior:"smooth"});
+}
+
+// ── Export CSV ──
+function exportCSV(){
+  if(!leads.length)return alert("Nenhum dado para exportar.");
+  const city=document.getElementById("inputCity").value.trim()||"cidade";
+  const niche=document.getElementById("inputNiche").value.trim()||"nicho";
+
+  const headers=["#","Empresa","Avaliação","Reviews","Status","Telefone","Endereço","Categoria","Maps","Site"];
+  const rows=leads.map((l,i)=>[
+    i+1,
+    csvVal(l.name),
+    l.rating||"",
+    l.reviews||"",
+    l.open===true?"Aberto":l.open===false?"Fechado":"—",
+    csvVal(l.phone),
+    csvVal(l.address),
+    csvVal(l.types),
+    "https://www.google.com/maps/place/?q=place_id:"+l.place_id,
+    csvVal(l.website)
+  ]);
+
+  let csv="\uFEFF"+headers.join(";")+"\n";
+  rows.forEach(r=>csv+=r.join(";")+"\n");
+
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`leads_${slug(niche)}_${slug(city)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function csvVal(v){
+  if(!v||v==="—")return"";
+  return'"'+String(v).replace(/"/g,'""')+'"';
+}
+function slug(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"")}
+
+// ── Status Helpers ──
+function showStatus(text,pct){
+  document.getElementById("status-box").style.display="block";
+  document.getElementById("status-text").textContent=text;
+  document.getElementById("progressFill").style.width=Math.min(pct,100)+"%";
+}
+function hideStatus(){
+  document.getElementById("status-box").style.display="none";
+  document.getElementById("progressFill").style.width="0%";
+}
+
+// ── Utils ──
+function esc(s){if(!s)return"—";const d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ── Admin Panel ──
+function openAdmin(){
+  document.getElementById("adminOverlay").style.display="block";
+  document.getElementById("adminEmail").textContent=window._ADMIN_EMAIL;
+  loadAdmin();
+}
+function closeAdmin(){document.getElementById("adminOverlay").style.display="none"}
+
+async function loadAdmin(){
+  try{
+    const q=window._query(window._collection(window._db,"searches"),window._orderBy("ts","desc"),window._limit(50));
+    const snap=await window._getDocs(q);
+    const docs=[];
+    snap.forEach(d=>docs.push(d.data()));
+
+    // KPIs
+    const totalSearches=docs.length;
+    const totalLeads=docs.reduce((s,d)=>s+(d.leads||0),0);
+    const uniqueUsers=new Set(docs.map(d=>d.email)).size;
+    const avgLeads=totalSearches?Math.round(totalLeads/totalSearches):0;
+
+    document.getElementById("kpiSearches").textContent=totalSearches;
+    document.getElementById("kpiLeads").textContent=totalLeads;
+    document.getElementById("kpiUsers").textContent=uniqueUsers;
+    document.getElementById("kpiAvg").textContent=avgLeads;
+
+    // Top Niches & Cities
+    const nicheCount={},cityCount={};
+    docs.forEach(d=>{
+      if(d.niche){nicheCount[d.niche]=(nicheCount[d.niche]||0)+1}
+      if(d.city){cityCount[d.city]=(cityCount[d.city]||0)+1}
+    });
+
+    document.getElementById("topNiches").innerHTML=topList(nicheCount,6);
+    document.getElementById("topCities").innerHTML=topList(cityCount,6);
+
+    // History Table
+    document.getElementById("adminTableBody").innerHTML=docs.map(d=>{
+      const date=d.ts?new Date(d.ts.seconds*1000).toLocaleString("pt-BR"):"—";
+      return `<tr>
+        <td>${date}</td>
+        <td>${esc(d.name||d.email)}</td>
+        <td>${esc(d.city)}</td>
+        <td>${esc(d.niche)}</td>
+        <td>${d.leads||0}</td>
+      </tr>`;
+    }).join("");
+
+  }catch(e){
+    console.error("Admin load error:",e);
+  }
+}
+
+function topList(obj,n){
+  return Object.entries(obj)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,n)
+    .map(([k,v])=>`<div class="top-item"><span class="name">${esc(k)}</span><span class="cnt">${v}</span></div>`)
+    .join("")||'<div style="color:var(--mt);font-size:.85rem">Sem dados</div>';
+}
+</script>
+
+</body>
+</html>
